@@ -1,4 +1,7 @@
 
+# 我在使用TypeScript重构本项目，如需使用请直接引用src/toastify.js
+
+
 # Toastify
 
 ![Built with JavaScript](https://img.shields.io/badge/Built%20with-JavaScript-red?style=for-the-badge&logo=javascript)
