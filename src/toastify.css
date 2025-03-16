@@ -50,14 +50,20 @@
 }
 
 /* 动画效果 */
-.toastify.show {
-    animation: toast-in 0.3s ease forwards;
+.toast-container.toastify-top .toastify.show {
+    animation: toast-in-top 0.4s ease-in-out forwards;
 }
-.toastify.hide {
-    animation: toast-out 0.3s ease forwards;
+.toast-container.toastify-bottom .toastify.show {
+    animation: toast-in-bottom 0.4s ease-in-out forwards;
+}
+.toast-container.toastify-top .toastify.hide {
+    animation: toast-out-top 0.2s ease-in-out forwards;
+}
+.toast-container.toastify-bottom .toastify.hide {
+    animation: toast-out-bottom 0.2s ease-in-out forwards;
 }
 
-@keyframes toast-in {
+@keyframes toast-in-top {
     from {
         opacity: 0;
         transform: translateY(-100%);
@@ -68,7 +74,18 @@
     }
 }
 
-@keyframes toast-out {
+@keyframes toast-in-bottom {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes toast-out-top {
     from {
         opacity: 1;
         transform: translateY(0);
@@ -76,6 +93,17 @@
     to {
         opacity: 0;
         transform: translateY(-100%);
+    }
+}
+
+@keyframes toast-out-bottom {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(100%);
     }
 }
 
