@@ -4,17 +4,15 @@ var bgColors = [
   ],
   i = 0;
 
-Toastify({
+new Toastify({
   text: "Hi",
-  duration: 4500,
-  destination: "https://github.com/apvarun/toastify-js",
-  newWindow: true,
   gravity: "top",
   position: 'left',
 }).showToast();
 
 setTimeout(function() {
-  Toastify({
+  new Toastify({
+    duration: -1,
     text: "Simple JavaScript Toasts",
     gravity: "top",
     position: 'center',
@@ -39,7 +37,7 @@ var options = {
 };
 
 // Initializing the toast
-var myToast = Toastify(options);
+var myToast =new Toastify(options);
 
 // Toast after delay
 setTimeout(function() {
@@ -47,7 +45,7 @@ setTimeout(function() {
 }, 4500);
 
 setTimeout(function() {
-  Toastify({
+  new Toastify({
     text: "Highly customizable",
     gravity: "bottom",
     position: 'left',
@@ -60,7 +58,7 @@ setTimeout(function() {
 
 // Displaying toast on manual action `Try`
 document.getElementById("new-toast").addEventListener("click", function() {
-  Toastify({
+  new Toastify({
     text: "I am a toast",
     duration: 3000,
     close: i % 3 ? true : false,

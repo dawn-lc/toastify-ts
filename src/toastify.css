@@ -1,85 +1,94 @@
-/*!
- * Toastify js 1.12.0
- * https://github.com/apvarun/toastify-js
- * @license MIT licensed
- *
- * Copyright (C) 2018 Varun A P
- */
-
+/* Toastify 动画核心样式 */
 .toastify {
-    padding: 12px 20px;
-    color: #ffffff;
-    display: inline-block;
-    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12), 0 10px 36px -4px rgba(77, 96, 232, 0.3);
-    background: -webkit-linear-gradient(315deg, #73a5ff, #5477f5);
-    background: linear-gradient(135deg, #73a5ff, #5477f5);
-    position: fixed;
+  position: fixed;
+  z-index: 9999;
+  max-width: 320px;
+  padding: 12px 20px;
+  margin: 10px;
+  background: #333;
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/* 显示/隐藏动画 */
+.toastify.show {
+  animation: toastify-show 0.4s forwards;
+}
+
+.toastify.hide {
+  animation: toastify-hide 0.4s forwards;
+}
+
+@keyframes toastify-show {
+  from {
     opacity: 0;
-    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
-    border-radius: 2px;
-    cursor: pointer;
-    text-decoration: none;
-    max-width: calc(50% - 20px);
-    z-index: 2147483647;
-}
-
-.toastify.on {
+  }
+  to {
     opacity: 1;
+  }
 }
 
-.toast-close {
-    background: transparent;
-    border: 0;
-    color: white;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 1em;
-    opacity: 0.4;
-    padding: 0 5px;
+@keyframes toastify-hide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
-.toastify-right {
-    right: 15px;
-}
-
-.toastify-left {
-    left: 15px;
-}
-
+/* 位置定位 */
 .toastify-top {
-    top: -150px;
+  top: 0;
 }
 
 .toastify-bottom {
-    bottom: -150px;
+  bottom: 0;
 }
 
-.toastify-rounded {
-    border-radius: 25px;
+.toastify-left {
+  left: 0;
 }
 
-.toastify-avatar {
-    width: 1.5em;
-    height: 1.5em;
-    margin: -7px 5px;
-    border-radius: 2px;
+.toastify-right {
+  right: 0;
 }
 
 .toastify-center {
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0;
-    max-width: fit-content;
-    max-width: -moz-fit-content;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-@media only screen and (max-width: 360px) {
-    .toastify-right, .toastify-left {
-        margin-left: auto;
-        margin-right: auto;
-        left: 0;
-        right: 0;
-        max-width: fit-content;
-    }
+/* 关闭按钮样式 */
+.toast-close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+  opacity: 0.7;
+  padding: 0 5px;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* 响应式布局 */
+@media (max-width: 360px) {
+  .toastify {
+    width: calc(100% - 20px);
+    max-width: none;
+  }
+  
+  .toastify-right .toast-close,
+  .toastify-left .toast-close {
+    margin-left: auto;
+  }
 }
