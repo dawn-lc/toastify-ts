@@ -13,7 +13,7 @@ new Toastify({
 setTimeout(function() {
   new Toastify({
     duration: 3000,
-    text: "Simple JavaScript Toasts",
+    text: "Simple TypeScript Toasts",
     gravity: "top",
     position: 'center',
     style: {
@@ -28,7 +28,6 @@ var options = {
   duration: 2500,
   callback: function() {
     console.log("Toast hidden");
-    Toastify.reposition();
   },
   close: true,
   style: {
@@ -59,10 +58,12 @@ let gra = ["top", "bottom"];
 let pos = ["left", "center", "right"]
 // Displaying toast on manual action `Try`
 document.getElementById("new-toast").addEventListener("click", function() {
+  let g = gra.at(Math.floor(Math.random() * gra.length));
+  let p = pos.at(Math.floor(Math.random() * pos.length))
   new Toastify({
-    gravity: gra.at(Math.floor(Math.random() * gra.length)),
-    position: pos.at(Math.floor(Math.random() * pos.length)),
-    text: "I am a toast",
+    gravity: g,
+    position: p,
+    text: `I am a ${g} ${p} toast`,
     duration: 3000,
     close: i % 3 ? true : false,
     style: {
