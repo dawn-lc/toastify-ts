@@ -1,7 +1,7 @@
 /* Toast容器基础样式 */
 .toast-container {
     position: fixed;
-    z-index: 9999;
+    z-index: 2147483647;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -57,10 +57,10 @@
     animation: toast-in-bottom 0.4s ease-in-out forwards;
 }
 .toast-container.toastify-top .toastify.hide {
-    animation: toast-out-top 0.2s ease-in-out forwards;
+    animation: toast-out-top 0.25s ease-in-out forwards;
 }
 .toast-container.toastify-bottom .toastify.hide {
-    animation: toast-out-bottom 0.2s ease-in-out forwards;
+    animation: toast-out-bottom 0.25s ease-in-out forwards;
 }
 
 @keyframes toast-in-top {
@@ -88,10 +88,12 @@
 @keyframes toast-out-top {
     from {
         opacity: 1;
+        z-index: 2147483646;
         transform: translateY(0);
     }
     to {
         opacity: 0;
+        z-index: 2147483646;
         transform: translateY(-100%);
     }
 }
@@ -99,10 +101,12 @@
 @keyframes toast-out-bottom {
     from {
         opacity: 1;
+        z-index: 2147483646;
         transform: translateY(0);
     }
     to {
         opacity: 0;
+        z-index: 2147483646;
         transform: translateY(100%);
     }
 }
