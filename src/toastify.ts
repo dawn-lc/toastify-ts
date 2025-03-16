@@ -6,15 +6,8 @@
  * Copyright (C) 2018 Varun A P
  */
 /**
- * 表示 Toast 元素的偏移量配置
- */
-interface Offset {
-    x: number | string;  // X 轴偏移量，支持像素值或字符串格式
-    y: number | string;  // Y 轴偏移量，支持像素值或字符串格式
-}
-/**
  * Toastify 配置选项接口
- * @property {string|Node} [selector] - 挂载元素的 CSS 选择器或 DOM 节点
+* @property {Element} [root] - 根节点
  * @property {string} [text] - 显示的文本内容
  * @property {Node} [node] - 自定义 DOM 节点替代文本
  * @property {number} [duration=3000] - 自动关闭延时（毫秒）
@@ -26,12 +19,11 @@ interface Offset {
  * @property {boolean} [stopOnFocus=true] - 鼠标悬停时暂停自动关闭
  * @property {() => void} [callback] - 关闭后的回调函数
  * @property {() => void} [onClick] - 点击事件回调
- * @property {Offset} [offset] - 显示位置偏移量配置
  * @property {Record<string, string>} style - 行内样式配置
  * @property {boolean} [oldestFirst=true] - 新通知的排列顺序
  */
 interface ToastifyOptions {
-    selector?: string|Node
+    root?: Element;
     text?: string;
     node?: Node;
     duration?: number;
@@ -42,10 +34,32 @@ interface ToastifyOptions {
     className?: string;
     stopOnFocus?: boolean;
     callback?: () => void;
-    onClick?: () => void;
-    offset?: Offset;
+    onClick?: (e: Event) => void;
     style?: Record<string, string>;
     oldestFirst?: boolean;
+}
+
+var ToastTimeoutMap = new Map<HTMLElement, number>();
+var ToastContainers = new Map<string, HTMLElement>();
+
+/**
+ * 生成对应位置的 Toast 容器
+ * @param gravity 位置类型（top/bottom）
+ * @param position 对齐方式（left/center/right）
+ * @returns 新创建或已存在的容器元素
+ */
+function getOrCreateContainer(gravity: "top" | "bottom", position: "left" | "center" | "right"): HTMLElement {
+    const containerId = `toast-container-${gravity}-${position}`;
+    if (ToastContainers.has(containerId)) {
+        return ToastContainers.get(containerId)!;
+    }
+    const container = document.createElement("div");
+    container.classList.add('toast-container', containerId, `toastify-${gravity}`, `toastify-${position}`);
+    container.setAttribute('role', 'region');
+    container.setAttribute('aria-label', `Toast notifications - ${gravity} ${position}`);
+    document.body.appendChild(container);
+    ToastContainers.set(containerId, container);
+    return container;
 }
 /**
  * Toastify 通知组件核心类
@@ -56,13 +70,6 @@ interface ToastifyOptions {
  * new Toastify({ text: "Hello World" }).showToast();
  */
  class Toastify {
-    /** 
-     * 存储所有 Toast 元素及其自动关闭计时器的映射表
-     * @key {HTMLElement} toast 元素
-     * @value {number} setTimeout 返回的计时器 ID
-     */
-    private timeoutMap = new Map<HTMLElement, number>();
-    
     private readonly defaults: ToastifyOptions = {
         text: "Toastify is awesome!",
         duration: 3000,
@@ -76,8 +83,7 @@ interface ToastifyOptions {
     };
     
     public options: ToastifyOptions;
-    private rootElement: Element | ShadowRoot = document.body;
-    public toastElement: HTMLElement | null = null;
+    public toastElement: HTMLElement;
 
     /**
      * 创建 Toastify 实例
@@ -86,12 +92,11 @@ interface ToastifyOptions {
     constructor(options: ToastifyOptions) {
         this.options = { 
             ...this.defaults,
-            ...options,
-            offset: {
-                ...this.defaults.offset,
-                ...(options.offset || {})
-            } as Offset
+            ...options
         };
+        if(!this.options.root) {
+            this.options.root = getOrCreateContainer(this.options.gravity!, this.options.position!);
+        }
     }
 
     /**
@@ -100,23 +105,23 @@ interface ToastifyOptions {
      * @private
      */
     private buildToast(): HTMLElement {
-        const section = document.createElement("section");
-        section.classList.add(
+        const toast = document.createElement("div");
+        toast.classList.add(
             'toastify',
             `toastify-${this.options.gravity}`,
             `toastify-${this.options.position}`
         );
         if (this.options.className) {
-            section.classList.add(this.options.className);
+            toast.classList.add(this.options.className);
         }
-        this.applyStyles(section);
-        this.setAriaLive(section);
-        this.addContent(section);
-        this.addHoverHandlers(section);
-        if (this.options.close) this.addCloseButton(section);
-        if (this.options.onClick) this.addClickHandlers(section);
+        this.applyStyles(toast);
+        this.setAriaLive(toast);
+        this.addContent(toast);
+        this.addHoverHandlers(toast);
+        if (this.options.close) this.addCloseButton(toast);
+        if (this.options.onClick) this.addClickHandlers(toast);
 
-        return section;
+        return toast;
     }
 
     /**
@@ -125,20 +130,21 @@ interface ToastifyOptions {
      */
     public showToast(): this {
         this.toastElement = this.buildToast();
-        this.setRootElement();
         this.insertToast();
-
-        // 使用 CSS 动画显示 toast
-        requestAnimationFrame(() => {
-            this.toastElement?.classList.add('show');
-            this.toastElement?.classList.remove('hide');
-        });
-
+        if (!this.toastElement.classList.replace('hide','show')) {
+            this.toastElement.classList.add('show')
+        }
         if (this.options.duration && this.options.duration > 0) {
             this.setAutoDismissTimeout();
         }
-
         return this;
+    }
+
+    private removeTimeout(element: HTMLElement) {
+        if (ToastTimeoutMap.has(element)) {
+            clearTimeout(ToastTimeoutMap.get(element));
+            ToastTimeoutMap.delete(element);
+        }
     }
 
     /**
@@ -147,20 +153,15 @@ interface ToastifyOptions {
      */
     public hideToast(): void {
         if (!this.toastElement) return;
-
         const handleAnimationEnd = () => {
             this.toastElement?.removeEventListener('animationend', handleAnimationEnd);
             this.removeElement(this.toastElement);
         };
-
         this.toastElement.addEventListener('animationend', handleAnimationEnd);
-        this.toastElement.classList.add('hide');
-        this.toastElement.classList.remove('show');
-
-        if (this.timeoutMap.has(this.toastElement)) {
-            clearTimeout(this.timeoutMap.get(this.toastElement));
-            this.timeoutMap.delete(this.toastElement);
+        if (!this.toastElement.classList.replace('show','hide')) {
+            this.toastElement.classList.add('hide')
         }
+        this.removeTimeout(this.toastElement);
     }
 
     /**
@@ -206,25 +207,16 @@ interface ToastifyOptions {
      */
     private addCloseButton(element: HTMLElement): void {
         if (this.options.close) {
-            const closeBtn = document.createElement("button");
-            closeBtn.type = "button";
+            const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
-            closeBtn.innerHTML = "&#10006;";
-
+            closeBtn.textContent = "&#10006;";
             closeBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.removeElement(element);
-                if (this.timeoutMap.has(element)) {
-                    clearTimeout(this.timeoutMap.get(element));
-                    this.timeoutMap.delete(element);
-                }
+                this.removeTimeout(element);
             });
-
-            const shouldPrepend = this.options.position === "left" && window.innerWidth > 360;
-            shouldPrepend 
-                ? element.insertAdjacentElement("afterbegin", closeBtn)
-                : element.appendChild(closeBtn);
+            element.appendChild(closeBtn);
         }
     }
 
@@ -235,12 +227,7 @@ interface ToastifyOptions {
      */
     private addHoverHandlers(element: HTMLElement): void {
         if (this.options.stopOnFocus && this.options.duration && this.options.duration > 0) {
-            element.addEventListener("mouseover", () => {
-                if (this.timeoutMap.has(element)) {
-                    clearTimeout(this.timeoutMap.get(element));
-                    this.timeoutMap.delete(element);
-                }
-            });
+            element.addEventListener("mouseover", () =>  this.removeTimeout(element));
             element.addEventListener("mouseleave", () => this.setAutoDismissTimeout(element));
         }
     }
@@ -253,20 +240,8 @@ interface ToastifyOptions {
     private addClickHandlers(element: HTMLElement): void {
         element.addEventListener("click", (e) => {
             e.stopPropagation();
-            this.options.onClick?.();
+            this.options.onClick?.(e);
         });
-    }
-
-    /**
-     * 设置 Toast 挂载的根元素
-     * @private
-     */
-    private setRootElement(): void {
-        if (typeof this.options.selector === "string") {
-            this.rootElement = document.querySelector(this.options.selector) ?? this.rootElement;
-        } else if (this.options.selector instanceof HTMLElement || this.options.selector instanceof ShadowRoot) {
-            this.rootElement = this.options.selector;
-        }
     }
 
     /**
@@ -275,11 +250,10 @@ interface ToastifyOptions {
      * @private
      */
     private insertToast(): void {
-        if (!this.rootElement) throw "Root element not found";
-        const elementToInsert = this.options.oldestFirst ? this.rootElement.firstChild : this.rootElement.lastChild;
-        this.rootElement.insertBefore(this.toastElement!, elementToInsert);
+        if (!this.options.root) throw "not find toast root";
+        const elementToInsert = this.options.oldestFirst ? this.options.root.firstChild : this.options.root.lastChild;
+        this.options.root.insertBefore(this.toastElement!, elementToInsert);
     }
-
     /**
      * 设置自动关闭计时器
      * @param element - 目标 Toast 元素，默认为当前实例的 toastElement
@@ -291,7 +265,7 @@ interface ToastifyOptions {
             () => this.removeElement(element),
             this.options.duration
         );
-        this.timeoutMap.set(element, timeoutId);
+        ToastTimeoutMap.set(element, timeoutId);
     }
 
     /**
@@ -301,29 +275,15 @@ interface ToastifyOptions {
      */
     private removeElement(element: HTMLElement | null): void {
         if (!element) return;
-
-        // 确保动画结束后移除元素
         const handleAnimationEnd = () => {
-            element.removeEventListener('animationend', handleAnimationEnd);
-            if (this.options.node?.parentNode) {
-                this.options.node.parentNode.removeChild(this.options.node);
-            }
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
-                this.options.callback?.();
-            }
+            element?.removeEventListener('animationend', handleAnimationEnd);
+            element?.remove();
+            this.options.callback?.();
         };
-
         element.addEventListener('animationend', handleAnimationEnd);
-        
-        // 清除元素对应的计时器
-        if (this.timeoutMap.has(element)) {
-            clearTimeout(this.timeoutMap.get(element));
-            this.timeoutMap.delete(element);
+        this.removeTimeout(element);
+        if (!this.toastElement.classList.replace('show','hide')) {
+            this.toastElement.classList.add('hide')
         }
-        
-        // 触发离场动画
-        element.classList.remove('show');
-        element.classList.add('hide');
     }
 }
