@@ -1,13 +1,7 @@
-/*!
- * Toastify js 1.12.0
- * https://github.com/apvarun/toastify-js
- * @license MIT licensed
- *
- * Copyright (C) 2018 Varun A P
- */
+
 /**
  * Toastify 配置选项接口
-* @property {Element} [root] - 根节点
+ * @property {Element} [root] - 根节点
  * @property {string} [text] - 显示的文本内容
  * @property {Node} [node] - 自定义 DOM 节点替代文本
  * @property {number} [duration=3000] - 自动关闭延时（毫秒）
@@ -210,7 +204,7 @@ function getOrCreateContainer(gravity: "top" | "bottom", position: "left" | "cen
             const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
-            closeBtn.textContent = "&#10006;";
+            closeBtn.textContent = "x";
             closeBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.removeElement(element);

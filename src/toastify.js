@@ -156,7 +156,7 @@ class Toastify {
             const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
-            closeBtn.textContent = "&#10006;";
+            closeBtn.textContent = "x";
             closeBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.removeElement(element);

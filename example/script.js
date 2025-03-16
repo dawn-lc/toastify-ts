@@ -12,7 +12,7 @@ new Toastify({
 
 setTimeout(function() {
   new Toastify({
-    duration: -1,
+    duration: 3000,
     text: "Simple JavaScript Toasts",
     gravity: "top",
     position: 'center',
@@ -55,10 +55,13 @@ setTimeout(function() {
     }
   }).showToast();
 }, 3000);
-
+let gra = ["top", "bottom"];
+let pos = ["left", "center", "right"]
 // Displaying toast on manual action `Try`
 document.getElementById("new-toast").addEventListener("click", function() {
   new Toastify({
+    gravity: gra.at(Math.floor(Math.random() * gra.length)),
+    position: pos.at(Math.floor(Math.random() * pos.length)),
     text: "I am a toast",
     duration: 3000,
     close: i % 3 ? true : false,
