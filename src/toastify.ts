@@ -78,51 +78,45 @@ class ToastManager {
 }
 
 class ToastBuilder {
-    static build(options: ToastifyOptions): HTMLElement {
-        const toast = document.createElement("div");
-        this.applyBaseStyles(toast, options);
-        this.addContent(toast, options);
-        this.addInteractiveElements(toast, options);
-        return toast;
+    static build(toast: Toastify) {
+        this.applyBaseStyles(toast);
+        this.addContent(toast);
+        this.addInteractiveElements(toast);
     }
 
-    private static applyBaseStyles(element: HTMLElement, options: ToastifyOptions) {
-        element.classList.add(
+    private static applyBaseStyles(toast: Toastify) {
+        toast.element.setAttribute('aria-live', toast.ariaLive);
+        toast.element.classList.add(
             'toastify',
-            `toastify-${options.gravity}`,
-            `toastify-${options.position}`
+            `toastify-${toast.gravity}`,
+            `toastify-${toast.position}`
         );
-        if (options.className) element.classList.add(options.className);
-        if (options.style) this.applyCustomStyles(element, options.style);
-        if (options.ariaLive) element.setAttribute('aria-live', options.ariaLive);
-    }
-
+        if (toast.options.className) toast.element.classList.add(toast.options.className);
+        if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
+    }    
     private static applyCustomStyles(element: HTMLElement, styles: CSSProperties) {
         Object.entries(styles).forEach(([prop, value]) => {
             (element.style as any)[prop] = value;
         });
     }
 
-    private static addContent(element: HTMLElement, options: ToastifyOptions) {
-        element.textContent = options.text ?? null;
-        if (options.node) element.appendChild(options.node);
+    private static addContent(toast: Toastify) {
+        if (toast.options.text) toast.element.textContent = toast.options.text;
+        if (toast.options.node) toast.element.appendChild(toast.options.node);
     }
 
-    private static addInteractiveElements(element: HTMLElement, options: ToastifyOptions) {
-        if (options.close) this.addCloseButton(element, options);
-        if (options.onClick) element.addEventListener("click", e => options.onClick?.(e));
+    private static addInteractiveElements(toast: Toastify) {
+        if (toast.close) this.addCloseButton(toast);
+        if (toast.onClick) toast.element.addEventListener("click", e => toast.onClick?.(e));
     }
 
-    private static addCloseButton(element: HTMLElement, options: ToastifyOptions) {
+    private static addCloseButton(toast: Toastify) {
         const closeBtn = document.createElement("span");
         closeBtn.ariaLabel = "Close";
         closeBtn.className = "toast-close";
         closeBtn.textContent = "x";
-        closeBtn.addEventListener("click", e => {
-            e.stopPropagation();
-            options.onClose?.();
-        });
-        element.appendChild(closeBtn);
+        closeBtn.addEventListener("click", e => toast.hideToast());
+        toast.element.appendChild(closeBtn);
     }
 }
 
@@ -136,23 +130,27 @@ class ToastBuilder {
  */
 class Toastify {
     private readonly defaults: ToastifyOptions = {
-        text: "Toastify is awesome!",
         duration: 3000,
-        close: false,
         gravity: "top",
         position: 'left',
         ariaLive: "polite",
+        close: false,
         stopOnFocus: true,
         oldestFirst: true,
     };
     
     public options: ToastifyOptions;
-    public toastElement: HTMLElement;
 
-    private root: Element;
-    private gravity: Gravity;
-    private position: Position;
-    private oldestFirst: boolean;
+    public element: HTMLElement;
+    public root: Element;
+    public gravity: Gravity;
+    public position: Position;
+    public ariaLive: AriaLive;
+    public close: boolean;
+    public oldestFirst: boolean;
+    public stopOnFocus: boolean;
+    public onClick?: (e: Event) => void;
+    public onClose?: () => void;
 
     /**
      * 创建 Toastify 实例
@@ -163,10 +161,17 @@ class Toastify {
             ...this.defaults,
             ...options
         };
+        this.element = document.createElement("div"); 
         this.gravity = this.options.gravity!;
         this.position = this.options.position!;
         this.root = this.options.root ?? ToastManager.getContainer(this.gravity, this.position);
+        this.close = this.options.close!;
         this.oldestFirst = this.options.oldestFirst!;
+        this.stopOnFocus = this.options.stopOnFocus!;
+        this.ariaLive = this.options.ariaLive!;
+        if (this.options.onClick) this.onClick = this.options.onClick;
+        if (this.options.onClose) this.onClose = this.options.onClose;
+        ToastBuilder.build(this);
     }
     
     /**
@@ -174,14 +179,13 @@ class Toastify {
      * @returns this 实例用于链式调用
      */
     public showToast(): this {
-        this.toastElement = ToastBuilder.build(this.options);
         const elementToInsert = this.oldestFirst ? this.root.firstChild : this.root.lastChild;
-        this.root.insertBefore(this.toastElement!, elementToInsert);
-        if (!this.toastElement.classList.replace('hide','show')) {
-            this.toastElement.classList.add('show')
+        this.root.insertBefore(this.element!, elementToInsert);
+        if (!this.element.classList.replace('hide','show')) {
+            this.element.classList.add('show')
         }
         if (this.options.duration && this.options.duration > 0) {
-            ToastManager.setAutoDismiss(this.toastElement, this.options.duration!, () => this.removeElement(this.toastElement));
+            ToastManager.setAutoDismiss(this.element, this.options.duration!, () => this.hideToast());
         }
         return this;
     }
@@ -190,34 +194,16 @@ class Toastify {
      * 会触发 CSS 离场动画并在动画完成后移除元素
      */
     public hideToast(): void {
-        if (!this.toastElement) return;
+        if (!this.element) return;
+        ToastManager.clearTimeout(this.element);
         const handleAnimationEnd = () => {
-            this.toastElement?.removeEventListener('animationend', handleAnimationEnd);
-            this.removeElement(this.toastElement);
+            this.element?.removeEventListener('animationend', handleAnimationEnd);
+            this.element?.remove();
+            this.onClose?.();
         };
-        this.toastElement.addEventListener('animationend', handleAnimationEnd);
-        if (!this.toastElement.classList.replace('show','hide')) {
-            this.toastElement.classList.add('hide')
-        }
-        ToastManager.clearTimeout(this.toastElement);
-    }
-
-    /**
-     * 移除指定元素并触发回调
-     * @param element - 需要移除的 Toast 元素
-     * @private
-     */
-    private removeElement(element: HTMLElement | null): void {
-        if (!element) return;
-        const handleAnimationEnd = () => {
-            element?.removeEventListener('animationend', handleAnimationEnd);
-            element?.remove();
-            this.options.onClose?.();
-        };
-        element.addEventListener('animationend', handleAnimationEnd);
-        ToastManager.clearTimeout(element);
-        if (!this.toastElement.classList.replace('show','hide')) {
-            this.toastElement.classList.add('hide')
+        this.element.addEventListener('animationend', handleAnimationEnd);
+        if (!this.element.classList.replace('show','hide')) {
+            this.element.classList.add('hide')
         }
     }
 }

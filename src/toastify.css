@@ -37,7 +37,7 @@
 /* Toast元素基础样式 */
 .toastify {
     position: relative;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgb(55, 208, 255);
     color: white;
     padding: 1rem 2rem;
     border-radius: 4px;
