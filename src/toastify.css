@@ -46,7 +46,6 @@
     max-width: 350px;
 }
 
-/* 动画效果 */
 .toast-container.toastify-top .toastify.show {
     animation: toast-in-top 0.3s ease-in-out forwards;
 }
