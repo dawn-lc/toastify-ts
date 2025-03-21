@@ -3,7 +3,7 @@ namespace Toastify {
     type Position = "left" | "center" | "right";
     type AriaLive = "off" | "polite" | "assertive";
     type CSSProperties = Record<keyof CSSStyleDeclaration, string>;
-    
+
     /**
      * Toastify configuration options interface
      * @property {HTMLElement} [root] - Root element
@@ -37,11 +37,11 @@ namespace Toastify {
         style?: CSSProperties;
         oldestFirst?: boolean;
     }
-    
+
     class Manager {
         private static timeoutMap = new Map<HTMLElement, number>();
         private static containers = new Map<string, HTMLElement>();
-    
+
         static getContainer(gravity: Gravity, position: Position): HTMLElement {
             const containerId = `toast-container-${gravity}-${position}`;
             if (this.containers.has(containerId)) {
@@ -49,7 +49,7 @@ namespace Toastify {
             }
             return this.createContainer(containerId, gravity, position);
         }
-    
+
         private static createContainer(id: string, gravity: Gravity, position: Position): HTMLElement {
             const container = document.createElement("div");
             container.classList.add('toast-container', id, `toastify-${gravity}`, `toastify-${position}`);
@@ -59,31 +59,31 @@ namespace Toastify {
             this.containers.set(id, container);
             return container;
         }
-    
-        static setAutoDismiss(element: HTMLElement, duration: number, callback: () => void) {
-            this.clearTimeout(element);
+
+        static setAutoDismiss(toast: Toast, duration: number, callback: () => void) {
+            this.clearTimeout(toast);
             const timeoutId = window.setTimeout(() => {
                 callback();
-                this.clearTimeout(element);
+                this.clearTimeout(toast);
             }, duration);
-            this.timeoutMap.set(element, timeoutId);
+            this.timeoutMap.set(toast.element, timeoutId);
         }
-    
-        static clearTimeout(element: HTMLElement) {
-            if (this.timeoutMap.has(element)) {
-                clearTimeout(this.timeoutMap.get(element)!);
-                this.timeoutMap.delete(element);
+
+        static clearTimeout(toast: Toast) {
+            if (this.timeoutMap.has(toast.element)) {
+                clearTimeout(this.timeoutMap.get(toast.element)!);
+                this.timeoutMap.delete(toast.element);
             }
         }
     }
-    
+
     class Builder {
         static build(toast: Toast) {
             this.applyBaseStyles(toast);
             this.addContent(toast);
             this.addInteractiveElements(toast);
         }
-    
+
         private static applyBaseStyles(toast: Toast) {
             toast.element.setAttribute('aria-live', toast.ariaLive);
             toast.element.classList.add(
@@ -93,33 +93,33 @@ namespace Toastify {
             );
             if (toast.options.className) toast.element.classList.add(toast.options.className);
             if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
-        }    
+        }
         private static applyCustomStyles(element: HTMLElement, styles: CSSProperties) {
             for (const key in styles) {
                 element.style[key] = styles[key];
             }
         }
-    
+
         private static addContent(toast: Toast) {
             if (toast.options.text) toast.element.textContent = toast.options.text;
             if (toast.options.node) toast.element.appendChild(toast.options.node);
         }
-    
+
         private static addInteractiveElements(toast: Toast) {
             if (toast.close) this.addCloseButton(toast);
             if (toast.onClick) toast.element.addEventListener("click", e => toast.onClick?.(e));
         }
-    
+
         private static addCloseButton(toast: Toast) {
             const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
             closeBtn.textContent = "x";
-            closeBtn.addEventListener("click", e => toast.hideToast());
+            closeBtn.addEventListener("click", e => toast.hide());
             toast.element.appendChild(closeBtn);
         }
     }
-    
+
     /**
      * Toast
      * @example
@@ -135,9 +135,9 @@ namespace Toastify {
             stopOnFocus: true,
             oldestFirst: true,
         };
-        
+
         public options: Options;
-    
+
         public element: HTMLElement;
         public root: Element;
         public gravity: Gravity;
@@ -148,17 +148,17 @@ namespace Toastify {
         public stopOnFocus: boolean;
         public onClick?: (e: Event) => void;
         public onClose?: () => void;
-    
+
         /**
          * Create a Toastify instance
          * @param options User configuration options
          */
         constructor(options: Options) {
-            this.options = { 
+            this.options = {
                 ...this.defaults,
                 ...options
             };
-            this.element = document.createElement("div"); 
+            this.element = document.createElement("div");
             this.gravity = this.options.gravity!;
             this.position = this.options.position!;
             this.root = this.options.root ?? Manager.getContainer(this.gravity, this.position);
@@ -170,19 +170,28 @@ namespace Toastify {
             if (this.options.onClose) this.onClose = this.options.onClose;
             Builder.build(this);
         }
-        
+
         /**
          * Display the Toast notification
          * @returns this Instance for method chaining
          */
-        public show(): this{
+        public show(): this {
             const elementToInsert = this.oldestFirst ? this.root.firstChild : this.root.lastChild;
             this.root.insertBefore(this.element!, elementToInsert);
-            if (!this.element.classList.replace('hide','show')) {
+            if (!this.element.classList.replace('hide', 'show')) {
                 this.element.classList.add('show')
             }
             if (this.options.duration && this.options.duration > 0) {
-                Manager.setAutoDismiss(this.element, this.options.duration!, () => this.hideToast());
+                if (this.options.stopOnFocus) {
+                    this.element.addEventListener("mouseover", () => {
+                        Manager.clearTimeout(this);
+                    })
+                    // add back the timeout
+                    this.element.addEventListener("mouseleave",() => {
+                        Manager.setAutoDismiss(this, this.options.duration!, () => this.hide());
+                    })
+                }
+                Manager.setAutoDismiss(this, this.options.duration!, () => this.hide());
             }
             return this;
         }
@@ -194,16 +203,16 @@ namespace Toastify {
          * Immediately hide the current Toast
          * Triggers a CSS exit animation and removes the element after the animation completes
          */
-        public hide():void {
+        public hide(): void {
             if (!this.element) return;
-            Manager.clearTimeout(this.element);
+            Manager.clearTimeout(this);
             const handleAnimationEnd = () => {
                 this.element?.removeEventListener('animationend', handleAnimationEnd);
                 this.element?.remove();
                 this.onClose?.();
             };
             this.element.addEventListener('animationend', handleAnimationEnd);
-            if (!this.element.classList.replace('show','hide')) {
+            if (!this.element.classList.replace('show', 'hide')) {
                 this.element.classList.add('hide')
             }
         }
@@ -219,4 +228,3 @@ export default function Toast(options: Toastify.Options): Toastify.Toast {
     return new Toastify.Toast(options)
 }
 globalThis.Toast = Toast;
-

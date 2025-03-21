@@ -21,18 +21,18 @@
         this.containers.set(id, container);
         return container;
       }
-      static setAutoDismiss(element, duration, callback) {
-        this.clearTimeout(element);
+      static setAutoDismiss(toast, duration, callback) {
+        this.clearTimeout(toast);
         const timeoutId = window.setTimeout(() => {
           callback();
-          this.clearTimeout(element);
+          this.clearTimeout(toast);
         }, duration);
-        this.timeoutMap.set(element, timeoutId);
+        this.timeoutMap.set(toast.element, timeoutId);
       }
-      static clearTimeout(element) {
-        if (this.timeoutMap.has(element)) {
-          clearTimeout(this.timeoutMap.get(element));
-          this.timeoutMap.delete(element);
+      static clearTimeout(toast) {
+        if (this.timeoutMap.has(toast.element)) {
+          clearTimeout(this.timeoutMap.get(toast.element));
+          this.timeoutMap.delete(toast.element);
         }
       }
     }
@@ -70,7 +70,7 @@
         closeBtn.ariaLabel = "Close";
         closeBtn.className = "toast-close";
         closeBtn.textContent = "x";
-        closeBtn.addEventListener("click", (e) => toast.hideToast());
+        closeBtn.addEventListener("click", (e) => toast.hide());
         toast.element.appendChild(closeBtn);
       }
     }
@@ -127,7 +127,15 @@
           this.element.classList.add("show");
         }
         if (this.options.duration && this.options.duration > 0) {
-          Manager.setAutoDismiss(this.element, this.options.duration, () => this.hideToast());
+          if (this.options.stopOnFocus) {
+            this.element.addEventListener("mouseover", () => {
+              Manager.clearTimeout(this);
+            });
+            this.element.addEventListener("mouseleave", () => {
+              Manager.setAutoDismiss(this, this.options.duration, () => this.hide());
+            });
+          }
+          Manager.setAutoDismiss(this, this.options.duration, () => this.hide());
         }
         return this;
       }
@@ -140,7 +148,7 @@
        */
       hide() {
         if (!this.element) return;
-        Manager.clearTimeout(this.element);
+        Manager.clearTimeout(this);
         const handleAnimationEnd = () => {
           this.element?.removeEventListener("animationend", handleAnimationEnd);
           this.element?.remove();
