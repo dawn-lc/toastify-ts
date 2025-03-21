@@ -4,33 +4,32 @@ var bgColors = [
   ],
   i = 0;
 
-Toastify({
+Toast({
   text: "Hi",
   duration: 4500,
   destination: "https://github.com/apvarun/toastify-js",
   newWindow: true,
   gravity: "top",
   position: 'left',
-}).showToast();
+}).show();
 
 setTimeout(function() {
-  Toastify({
+  Toast({
     text: "Simple JavaScript Toasts",
     gravity: "top",
     position: 'center',
     style: {
       background: '#0f3443'
     }
-  }).showToast();
+  }).show();
 }, 1000);
 
 // Options for the toast
 var options = {
   text: "Happy toasting!",
   duration: 2500,
-  callback: function() {
+  onClose: function() {
     console.log("Toast hidden");
-    Toastify.reposition();
   },
   close: true,
   style: {
@@ -39,15 +38,15 @@ var options = {
 };
 
 // Initializing the toast
-var myToast = Toastify(options);
+var myToast = Toast(options);
 
 // Toast after delay
 setTimeout(function() {
-  myToast.showToast();
+  myToast.show();
 }, 4500);
 
 setTimeout(function() {
-  Toastify({
+  Toast({
     text: "Highly customizable",
     gravity: "bottom",
     position: 'left',
@@ -55,18 +54,18 @@ setTimeout(function() {
     style: {
       background: "linear-gradient(to right, #ff5f6d, #ffc371)",
     }
-  }).showToast();
+  }).show();
 }, 3000);
 
 // Displaying toast on manual action `Try`
 document.getElementById("new-toast").addEventListener("click", function() {
-  Toastify({
+  Toast({
     text: "I am a toast",
     duration: 3000,
     close: i % 3 ? true : false,
     style: {
       background: bgColors[i % 2],
     }
-  }).showToast();
+  }).show();
   i++;
 });
