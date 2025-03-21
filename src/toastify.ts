@@ -39,7 +39,7 @@ namespace Toastify {
     }
 
     class Manager {
-        private static timeoutMap = new Map<HTMLElement, number>();
+        private static timeoutMap = new Map<Toast, number>();
         private static containers = new Map<string, HTMLElement>();
 
         static getContainer(gravity: Gravity, position: Position): HTMLElement {
@@ -60,19 +60,19 @@ namespace Toastify {
             return container;
         }
 
-        static setAutoDismiss(toast: Toast, duration: number, callback: () => void) {
-            this.clearTimeout(toast);
+        static addTimeout(toast: Toast, duration: number, callback: () => void) {
+            this.delTimeout(toast);
             const timeoutId = window.setTimeout(() => {
                 callback();
-                this.clearTimeout(toast);
+                this.delTimeout(toast);
             }, duration);
-            this.timeoutMap.set(toast.element, timeoutId);
+            this.timeoutMap.set(toast, timeoutId);
         }
 
-        static clearTimeout(toast: Toast) {
-            if (this.timeoutMap.has(toast.element)) {
-                clearTimeout(this.timeoutMap.get(toast.element)!);
-                this.timeoutMap.delete(toast.element);
+        static delTimeout(toast: Toast) {
+            if (this.timeoutMap.has(toast)) {
+                clearTimeout(this.timeoutMap.get(toast)!);
+                this.timeoutMap.delete(toast);
             }
         }
     }
@@ -184,17 +184,20 @@ namespace Toastify {
             if (this.options.duration && this.options.duration > 0) {
                 if (this.options.stopOnFocus) {
                     this.element.addEventListener("mouseover", () => {
-                        Manager.clearTimeout(this);
+                        Manager.delTimeout(this);
                     })
                     // add back the timeout
                     this.element.addEventListener("mouseleave",() => {
-                        Manager.setAutoDismiss(this, this.options.duration!, () => this.hide());
+                        Manager.addTimeout(this, this.options.duration!, () => this.hide());
                     })
                 }
-                Manager.setAutoDismiss(this, this.options.duration!, () => this.hide());
+                Manager.addTimeout(this, this.options.duration!, () => this.hide());
             }
             return this;
         }
+        /**
+         * @deprecated This function is deprecated. Use the show() instead.
+         */
         public showToast() {
             return this.show();
         }
@@ -205,7 +208,7 @@ namespace Toastify {
          */
         public hide(): void {
             if (!this.element) return;
-            Manager.clearTimeout(this);
+            Manager.delTimeout(this);
             const handleAnimationEnd = () => {
                 this.element?.removeEventListener('animationend', handleAnimationEnd);
                 this.element?.remove();
@@ -216,6 +219,9 @@ namespace Toastify {
                 this.element.classList.add('hide')
             }
         }
+        /**
+         * @deprecated This function is deprecated. Use the hide() instead.
+         */
         public hideToast(): void {
             this.hide();
         }
