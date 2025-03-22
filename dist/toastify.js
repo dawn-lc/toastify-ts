@@ -14,7 +14,7 @@
       }
       static createContainer(id, gravity, position) {
         const container = document.createElement("div");
-        container.classList.add("toast-container", id, `toastify-${gravity}`, `toastify-${position}`);
+        container.classList.add("toast-container", id, `toast-${gravity}`, `toast-${position}`);
         container.setAttribute("role", "region");
         container.setAttribute("aria-label", `Toast notifications - ${gravity} ${position}`);
         document.body.appendChild(container);
@@ -45,9 +45,9 @@
       static applyBaseStyles(toast) {
         toast.element.setAttribute("aria-live", toast.ariaLive);
         toast.element.classList.add(
-          "toastify",
-          `toastify-${toast.gravity}`,
-          `toastify-${toast.position}`
+          "toast",
+          `toast-${toast.gravity}`,
+          `toast-${toast.position}`
         );
         if (toast.options.className) toast.element.classList.add(toast.options.className);
         if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
@@ -69,7 +69,7 @@
         const closeBtn = document.createElement("span");
         closeBtn.ariaLabel = "Close";
         closeBtn.className = "toast-close";
-        closeBtn.textContent = "x";
+        closeBtn.textContent = "🗙";
         closeBtn.addEventListener("click", (e) => toast.hide());
         toast.element.appendChild(closeBtn);
       }

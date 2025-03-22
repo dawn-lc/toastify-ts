@@ -10,29 +10,29 @@
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.toast-container.toastify-top {
+.toast-container.toast-top {
     top: 0;
 }
 
-.toast-container.toastify-bottom {
+.toast-container.toast-bottom {
     bottom: 0;
 }
 
-.toast-container.toastify-left {
+.toast-container.toast-left {
     left: 0;
     align-items: flex-start;
 }
-.toast-container.toastify-center {
+.toast-container.toast-center {
     left: 50%;
     transform: translateX(-50%);
     align-items: center;
 }
-.toast-container.toastify-right {
+.toast-container.toast-right {
     right: 0;
     align-items: flex-end;
 }
 
-.toastify {
+.toast {
     position: relative;
     background: rgb(55, 208, 255);
     color: white;
@@ -42,20 +42,46 @@
     font-size: 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     cursor: default;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-    max-width: 350px;
+    transition: transform 0.5s ease, opacity 0.15s ease;
+    max-width: 480px;
 }
 
-.toast-container.toastify-top .toastify.show {
+.toast:hover {
+    z-index: 2147483647 !important;
+    transform: scale(1.25) !important;
+    will-change: transform;
+}
+
+.toast.toast-top.toast-left {
+    transform-origin: left center;
+}
+.toast.toast-top.toast-center {
+    transform-origin: top;
+}
+.toast.toast-top.toast-right {
+    transform-origin: right center;
+}
+
+.toast.toast-bottom.toast-left {
+    transform-origin: left center;
+}
+.toast.toast-bottom.toast-center {
+    transform-origin: bottom;
+}
+.toast.toast-bottom.toast-right {
+    transform-origin: right center;
+}
+
+.toast-container.toast-top .toast.show {
     animation: toast-in-top 0.3s ease-in-out forwards;
 }
-.toast-container.toastify-bottom .toastify.show {
+.toast-container.toast-bottom .toast.show {
     animation: toast-in-bottom 0.3s ease-in-out forwards;
 }
-.toast-container.toastify-top .toastify.hide {
+.toast-container.toast-top .toast.hide {
     animation: toast-out-top 0.15s ease-in-out forwards;
 }
-.toast-container.toastify-bottom .toastify.hide {
+.toast-container.toast-bottom .toast.hide {
     animation: toast-out-bottom 0.15s ease-in-out forwards;
 }
 
@@ -84,12 +110,10 @@
 @keyframes toast-out-top {
     from {
         opacity: 1;
-        z-index: 2147483646;
         transform: translateY(0);
     }
     to {
         opacity: 0;
-        z-index: 2147483646;
         transform: translateY(-100%);
     }
 }
@@ -97,12 +121,10 @@
 @keyframes toast-out-bottom {
     from {
         opacity: 1;
-        z-index: 2147483646;
         transform: translateY(0);
     }
     to {
         opacity: 0;
-        z-index: 2147483646;
         transform: translateY(100%);
     }
 }
@@ -110,15 +132,13 @@
 .toast-close {
     position: absolute;
     top: 4px;
-    right: 8px;
+    right: 4px;
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-    font-size: 16px;
+    font-size: 12px;
     line-height: 1;
 }
 .toast-close:hover {
-    opacity: 1;
+    transform: scale(1.5);
 }
 
 @media (max-width: 480px) {
@@ -126,7 +146,7 @@
         width: 100%;
         padding: 0.5rem;
     }
-    .toastify {
+    .toast {
         max-width: 100%;
         width: 100%;
         margin: 0.25rem;

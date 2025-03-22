@@ -52,7 +52,7 @@ namespace Toastify {
 
         private static createContainer(id: string, gravity: Gravity, position: Position): HTMLElement {
             const container = document.createElement("div");
-            container.classList.add('toast-container', id, `toastify-${gravity}`, `toastify-${position}`);
+            container.classList.add('toast-container', id, `toast-${gravity}`, `toast-${position}`);
             container.setAttribute('role', 'region');
             container.setAttribute('aria-label', `Toast notifications - ${gravity} ${position}`);
             document.body.appendChild(container);
@@ -87,9 +87,9 @@ namespace Toastify {
         private static applyBaseStyles(toast: Toast) {
             toast.element.setAttribute('aria-live', toast.ariaLive);
             toast.element.classList.add(
-                'toastify',
-                `toastify-${toast.gravity}`,
-                `toastify-${toast.position}`
+                'toast',
+                `toast-${toast.gravity}`,
+                `toast-${toast.position}`
             );
             if (toast.options.className) toast.element.classList.add(toast.options.className);
             if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
@@ -114,7 +114,7 @@ namespace Toastify {
             const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
-            closeBtn.textContent = "x";
+            closeBtn.textContent = "🗙";
             closeBtn.addEventListener("click", e => toast.hide());
             toast.element.appendChild(closeBtn);
         }
@@ -186,7 +186,6 @@ namespace Toastify {
                     this.element.addEventListener("mouseover", () => {
                         Manager.delTimeout(this);
                     })
-                    // add back the timeout
                     this.element.addEventListener("mouseleave",() => {
                         Manager.addTimeout(this, this.options.duration!, () => this.hide());
                     })
