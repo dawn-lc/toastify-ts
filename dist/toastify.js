@@ -40,7 +40,8 @@
       static build(toast) {
         this.applyBaseStyles(toast);
         this.addContent(toast);
-        this.addInteractiveElements(toast);
+        this.addCloseButton(toast);
+        this.bindEvent(toast);
       }
       static applyBaseStyles(toast) {
         toast.element.setAttribute("aria-live", toast.ariaLive);
@@ -49,7 +50,7 @@
           `toast-${toast.gravity}`,
           `toast-${toast.position}`
         );
-        if (toast.options.className) toast.element.classList.add(toast.options.className);
+        if (toast.options.className) Array.isArray(toast.options.className) ? toast.options.className.every((i) => toast.element.classList.add(i)) : toast.element.classList.add(toast.options.className);
         if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
       }
       static applyCustomStyles(element, styles) {
@@ -61,30 +62,38 @@
         if (toast.options.text) toast.element.textContent = toast.options.text;
         if (toast.options.node) toast.element.appendChild(toast.options.node);
       }
-      static addInteractiveElements(toast) {
-        if (toast.close) this.addCloseButton(toast);
-        if (toast.onClick) toast.element.addEventListener("click", (e) => toast.onClick?.(e));
+      static bindEvent(toast) {
+        if (toast.stopOnFocus && toast.duration > 0) {
+          toast.element.addEventListener("mouseover", () => {
+            Manager.delTimeout(toast);
+          });
+          toast.element.addEventListener("mouseleave", () => {
+            Manager.addTimeout(toast, toast.duration, () => toast.hide());
+          });
+        }
+        if (toast.onClick) toast.element.addEventListener("click", (e) => toast.onClick?.bind(toast)(e));
+        if (!toast.close && !toast.onClick && toast.duration > 0) toast.element.addEventListener("click", () => toast.hide());
       }
       static addCloseButton(toast) {
+        if (!toast.close) return;
         const closeBtn = document.createElement("span");
         closeBtn.ariaLabel = "Close";
         closeBtn.className = "toast-close";
         closeBtn.textContent = "🗙";
-        closeBtn.addEventListener("click", (e) => toast.hide());
+        closeBtn.addEventListener("click", () => toast.hide());
         toast.element.appendChild(closeBtn);
       }
     }
     class Toast2 {
       defaults = {
-        duration: 3e3,
         gravity: "top",
         position: "right",
         ariaLive: "polite",
-        close: false,
         stopOnFocus: true,
         oldestFirst: true
       };
       options;
+      duration;
       element;
       root;
       gravity;
@@ -108,10 +117,11 @@
         this.gravity = this.options.gravity;
         this.position = this.options.position;
         this.root = this.options.root ?? Manager.getContainer(this.gravity, this.position);
-        this.close = this.options.close;
+        this.ariaLive = this.options.ariaLive;
         this.oldestFirst = this.options.oldestFirst;
         this.stopOnFocus = this.options.stopOnFocus;
-        this.ariaLive = this.options.ariaLive;
+        this.duration = this.options.duration ?? -1;
+        this.close = this.options.close ?? false;
         if (this.options.onClick) this.onClick = this.options.onClick;
         if (this.options.onClose) this.onClose = this.options.onClose;
         Builder.build(this);
@@ -126,16 +136,8 @@
         if (!this.element.classList.replace("hide", "show")) {
           this.element.classList.add("show");
         }
-        if (this.options.duration && this.options.duration > 0) {
-          if (this.options.stopOnFocus) {
-            this.element.addEventListener("mouseover", () => {
-              Manager.delTimeout(this);
-            });
-            this.element.addEventListener("mouseleave", () => {
-              Manager.addTimeout(this, this.options.duration, () => this.hide());
-            });
-          }
-          Manager.addTimeout(this, this.options.duration, () => this.hide());
+        if (this.duration && this.duration > 0) {
+          Manager.addTimeout(this, this.duration, () => this.hide());
         }
         return this;
       }
@@ -152,15 +154,17 @@
       hide() {
         if (!this.element) return;
         Manager.delTimeout(this);
-        const handleAnimationEnd = () => {
-          this.element?.removeEventListener("animationend", handleAnimationEnd);
-          this.element?.remove();
-          this.onClose?.();
+        const handleAnimationEnd = (e) => {
+          if (e.animationName.startsWith("toast-out")) {
+            this.element?.removeEventListener("animationend", handleAnimationEnd);
+            this.element?.remove();
+          }
         };
         this.element.addEventListener("animationend", handleAnimationEnd);
         if (!this.element.classList.replace("show", "hide")) {
           this.element.classList.add("hide");
         }
+        this.onClose?.bind(this);
       }
       /**
        * @deprecated This function is deprecated. Use the hide() instead.

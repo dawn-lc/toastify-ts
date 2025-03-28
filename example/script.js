@@ -1,19 +1,22 @@
 var bgColors = [
-    "linear-gradient(to right, #00b09b, #96c93d)",
-    "linear-gradient(to right, #ff5f6d, #ffc371)",
-  ],
-  i = 0;
+  "linear-gradient(to right, #00b09b, #96c93d)",
+  "linear-gradient(to right, #ff5f6d, #ffc371)",
+];
+var gravity = ["top", "bottom"];
+var position = ["left", "center", "right"];
 
 Toast({
   text: "Hi",
-  duration: 4500,
-  destination: "https://github.com/apvarun/toastify-js",
-  newWindow: true,
   gravity: "top",
   position: 'left',
+  onClick: (e) => {
+    console.log(e);
+    window.open("https://github.com/apvarun/toastify-js");
+    this.hide();
+  }
 }).show();
 
-setTimeout(function() {
+setTimeout(function () {
   Toast({
     text: "Simple JavaScript Toasts",
     gravity: "top",
@@ -28,7 +31,7 @@ setTimeout(function() {
 var options = {
   text: "Happy toasting!",
   duration: 2500,
-  onClose: function() {
+  onClose: function () {
     console.log("Toast hidden");
   },
   close: true,
@@ -41,11 +44,11 @@ var options = {
 var myToast = Toast(options);
 
 // Toast after delay
-setTimeout(function() {
+setTimeout(function () {
   myToast.show();
 }, 4500);
 
-setTimeout(function() {
+setTimeout(function () {
   Toast({
     text: "Highly customizable",
     gravity: "bottom",
@@ -57,15 +60,18 @@ setTimeout(function() {
   }).show();
 }, 3000);
 
-// Displaying toast on manual action `Try`
-document.getElementById("new-toast").addEventListener("click", function() {
+
+document.getElementById("new-toast").addEventListener("click", function () {
+  let g = gravity.at(Math.floor(Math.random() * gravity.length))
+  let p = position.at(Math.floor(Math.random() * position.length))
   Toast({
-    text: "I am a toast",
+    text: `I am a ${g} ${p} toast`,
     duration: 3000,
-    close: i % 3 ? true : false,
+    gravity: g,
+    position: p,
+    close: Math.random() >= 0.5,
     style: {
-      background: bgColors[i % 2],
+      background: bgColors[Math.floor(Math.random() * bgColors.length)],
     }
   }).show();
-  i++;
 });
