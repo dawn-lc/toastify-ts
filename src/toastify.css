@@ -34,19 +34,18 @@
 }
 
 .toast {
-    position: relative;
     --toast-rate: 1;
     --toast-translate: 0;
     --toast-scale: 1;
     --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ease-in-back: cubic-bezier(0.36, 0, 0.66, -0.56);
+    position: relative;
     transition: transform calc(0.4s * var(--toast-rate)) var(--ease-out-back), opacity calc(0.3s * var(--toast-rate)) ease;
     transform: translate3d(0, var(--toast-translate), 0) scale(var(--toast-scale));
     max-width: 480px;
     will-change: transform, opacity;
     backface-visibility: hidden;
     contain: content;
-    overflow: hidden;
 }
 
 .toast-content {
@@ -56,9 +55,6 @@
     box-sizing: border-box;
     background: rgb(55, 208, 255);
     color: white;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .toast:hover {
@@ -115,53 +111,54 @@
 @keyframes toast-in-top {
     from {
         opacity: 0;
-        --toast-translate: -100%;
         max-height: 0;
+        --toast-translate: -100%;
     }
     to {
-        max-height: var(--toast-height);
         opacity: 1;
+        max-height: var(--toast-height);
     }
 }
 
 @keyframes toast-in-bottom {
     from {
         opacity: 0;
-        --toast-translate: 100%;
         max-height: 0;
+        --toast-translate: 100%;
     }
     to {
-        max-height: var(--toast-height);
         opacity: 1;
+        max-height: var(--toast-height);
     }
 }
 
 @keyframes toast-out-top {
     from {
-        max-height: var(--toast-height);
         opacity: 1;
+        max-height: var(--toast-height);
     }
     to {
-        max-height: 0;
         opacity: 0;
+        max-height: 0;
         --toast-translate: 100%;
     }
 }
 
 @keyframes toast-out-bottom {
     from {
-        max-height: var(--toast-height);
         opacity: 1;
+        max-height: var(--toast-height);
     }
     to {
-        max-height: 0;
         opacity: 0;
+        max-height: 0;
         --toast-translate: -100%;
     }
 }
 
 .toast-close {
     position: absolute;
+    color: white;
     top: 5px;
     right: 5px;
     cursor: pointer;

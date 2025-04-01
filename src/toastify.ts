@@ -81,8 +81,8 @@ export namespace Toastify {
             this.applyBaseStyles(toast);
             this.addContent(toast);
             this.addCloseButton(toast);
-            this.bindEvent(toast);
             this.measureToastDimensions(toast);
+            this.bindEvent(toast);
         }
 
         /**
