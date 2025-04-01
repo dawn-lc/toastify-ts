@@ -42,6 +42,31 @@
         this.addContent(toast);
         this.addCloseButton(toast);
         this.bindEvent(toast);
+        this.measureToastDimensions(toast);
+      }
+      /**
+       * Measures toast dimensions and sets CSS custom properties
+       * @param toast Toast instance to measure
+       */
+      static measureToastDimensions(toast) {
+        const { element } = toast;
+        const originalStyles = {
+          display: element.style.display,
+          visibility: element.style.visibility,
+          position: element.style.position
+        };
+        const tempStyles = {
+          display: "block",
+          visibility: "hidden",
+          position: "absolute"
+        };
+        this.applyCustomStyles(element, tempStyles);
+        document.body.appendChild(element);
+        const { height, width } = element.getBoundingClientRect();
+        element.style.setProperty(`--toast-height`, `${height}px`);
+        element.style.setProperty(`--toast-width`, `${width}px`);
+        document.body.removeChild(element);
+        this.applyCustomStyles(element, originalStyles);
       }
       static applyBaseStyles(toast) {
         toast.element.setAttribute("aria-live", toast.ariaLive);
@@ -51,16 +76,15 @@
           `toast-${toast.position}`
         );
         if (toast.options.className) Array.isArray(toast.options.className) ? toast.options.className.every((i) => toast.element.classList.add(i)) : toast.element.classList.add(toast.options.className);
-        if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
       }
       static applyCustomStyles(element, styles) {
         for (const key in styles) {
+          if (styles[key] === void 0) continue;
           element.style[key] = styles[key];
         }
       }
       static addContent(toast) {
-        if (toast.options.text) toast.element.textContent = toast.options.text;
-        if (toast.options.node) toast.element.appendChild(toast.options.node);
+        toast.element.appendChild(this.createContentElement(toast));
       }
       static bindEvent(toast) {
         if (toast.stopOnFocus && toast.duration > 0) {
@@ -72,16 +96,26 @@
           });
         }
         if (toast.onClick) toast.element.addEventListener("click", (e) => toast.onClick?.bind(toast)(e));
-        if (!toast.close && !toast.onClick && toast.duration > 0) toast.element.addEventListener("click", () => toast.hide());
+        if (!toast.close && !toast.onClick && toast.duration < 0) toast.element.addEventListener("click", () => toast.hide());
       }
       static addCloseButton(toast) {
-        if (!toast.close) return;
+        if (toast.close) toast.element.appendChild(this.createCloseButton(toast));
+      }
+      static createContentElement(toast) {
+        const content = document.createElement("div");
+        content.classList.add("toast-content");
+        if (toast.options.text) content.textContent = toast.options.text;
+        if (toast.options.node) content.appendChild(toast.options.node);
+        if (toast.options.style) this.applyCustomStyles(content, toast.options.style);
+        return content;
+      }
+      static createCloseButton(toast) {
         const closeBtn = document.createElement("span");
         closeBtn.ariaLabel = "Close";
         closeBtn.className = "toast-close";
         closeBtn.textContent = "🗙";
         closeBtn.addEventListener("click", () => toast.hide());
-        toast.element.appendChild(closeBtn);
+        return closeBtn;
       }
     }
     class Toast2 {
@@ -179,4 +213,5 @@
     return new Toastify.Toast(options);
   }
   globalThis.Toast = Toast;
+  globalThis.Toastify = Toast;
 })();

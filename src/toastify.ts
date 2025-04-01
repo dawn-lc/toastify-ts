@@ -2,7 +2,6 @@ export namespace Toastify {
     type Gravity = "top" | "bottom";
     type Position = "left" | "center" | "right";
     type AriaLive = "off" | "polite" | "assertive";
-    type CSSProperties = Record<keyof CSSStyleDeclaration, string>;
 
     /**
      * Toastify configuration options interface
@@ -34,7 +33,7 @@ export namespace Toastify {
         stopOnFocus?: boolean;
         onClose?: (this: Toast) => void;
         onClick?: (this: Toast, e: Event) => void;
-        style?: CSSProperties;
+        style?: Partial<CSSStyleDeclaration>;
         oldestFirst?: boolean;
     }
 
@@ -83,6 +82,32 @@ export namespace Toastify {
             this.addContent(toast);
             this.addCloseButton(toast);
             this.bindEvent(toast);
+            this.measureToastDimensions(toast);
+        }
+
+        /**
+         * Measures toast dimensions and sets CSS custom properties
+         * @param toast Toast instance to measure
+         */
+        private static measureToastDimensions(toast: Toast) {
+            const { element } = toast;
+            const originalStyles: Partial<CSSStyleDeclaration> = {
+                display: element.style.display,
+                visibility: element.style.visibility,
+                position: element.style.position
+            };
+            const tempStyles: Partial<CSSStyleDeclaration> = {
+                display: 'block',
+                visibility: 'hidden',
+                position: 'absolute'
+            };
+            this.applyCustomStyles(element, tempStyles);
+            document.body.appendChild(element);
+            const { height,width } = element.getBoundingClientRect();
+            element.style.setProperty(`--toast-height`, `${height}px`);
+            element.style.setProperty(`--toast-width`, `${width}px`);
+            document.body.removeChild(element);
+            this.applyCustomStyles(element, originalStyles);
         }
 
         private static applyBaseStyles(toast: Toast) {
@@ -93,17 +118,16 @@ export namespace Toastify {
                 `toast-${toast.position}`
             );
             if (toast.options.className) Array.isArray(toast.options.className) ? toast.options.className.every(i => toast.element.classList.add(i)) : toast.element.classList.add(toast.options.className);
-            if (toast.options.style) this.applyCustomStyles(toast.element, toast.options.style);
         }
-        private static applyCustomStyles(element: HTMLElement, styles: CSSProperties) {
+        private static applyCustomStyles(element: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
             for (const key in styles) {
+                if (styles[key] === undefined) continue;
                 element.style[key] = styles[key];
             }
         }
 
         private static addContent(toast: Toast) {
-            if (toast.options.text) toast.element.textContent = toast.options.text;
-            if (toast.options.node) toast.element.appendChild(toast.options.node);
+            toast.element.appendChild(this.createContentElement(toast));
         }
 
         private static bindEvent(toast: Toast) {
@@ -116,17 +140,29 @@ export namespace Toastify {
                 })
             }
             if (toast.onClick) toast.element.addEventListener("click", (e) => toast.onClick?.bind(toast)(e));
-            if (!toast.close && !toast.onClick && toast.duration > 0) toast.element.addEventListener("click", () => toast.hide());
+            if (!toast.close && !toast.onClick && toast.duration < 0) toast.element.addEventListener("click", () => toast.hide());
         }
 
         private static addCloseButton(toast: Toast) {
-            if (!toast.close) return;
+            if (toast.close) toast.element.appendChild(this.createCloseButton(toast));
+        }
+        
+        private static createContentElement(toast: Toast): HTMLDivElement {
+            const content = document.createElement("div");
+            content.classList.add('toast-content');
+            if (toast.options.text) content.textContent = toast.options.text;
+            if (toast.options.node) content.appendChild(toast.options.node);
+            if (toast.options.style) this.applyCustomStyles(content, toast.options.style);
+            return content;
+        }
+
+        private static createCloseButton(toast: Toast): HTMLSpanElement {
             const closeBtn = document.createElement("span");
             closeBtn.ariaLabel = "Close";
             closeBtn.className = "toast-close";
             closeBtn.textContent = "🗙";
             closeBtn.addEventListener("click", () => toast.hide());
-            toast.element.appendChild(closeBtn);
+            return closeBtn;
         }
     }
 

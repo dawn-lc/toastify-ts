@@ -9,7 +9,7 @@ Toast({
   text: "Hi",
   gravity: "top",
   position: 'left',
-  onClick: (e) => {
+  onClick(e) {
     console.log(e);
     window.open("https://github.com/apvarun/toastify-js");
     this.hide();
@@ -31,7 +31,7 @@ setTimeout(function () {
 var options = {
   text: "Happy toasting!",
   duration: 2500,
-  onClose: function () {
+  onClose() {
     console.log("Toast hidden");
   },
   close: true,
