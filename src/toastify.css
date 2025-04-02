@@ -46,6 +46,8 @@
     will-change: transform, opacity;
     backface-visibility: hidden;
     contain: content;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
 .toast-content {
@@ -58,8 +60,7 @@
 }
 
 .toast:hover {
-    z-index: 2147483647;
-    --toast-scale: 1.25;
+    --toast-scale: 1.15;
 }
 
 .toast.toast-top.toast-left {
